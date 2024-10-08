@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="english">
+    <head>
+        <style>
+            #swag {
+                margin-top: 100px;
+                color: red;
+            }
+        </style>
+        <title>
+            Test Page
+        </title>
+    </head>
+    <p1 id="swag">Test</p1>
+    <input type="button" value="Press" onclick="onPress()">
+    <label for="TextIn">Input Text:</label>
+    <input type="text" id="TextIn" name="inputText"><br><br>
+    <input type="button" value="Sumbit" onclick="writeIn()">
+    <script>
+        function onPress(){
+            console.log("Press");
+        }
+        function writeIn(){
+            let text = document.getElementById("TextIn").value;
+            console.log(text);
+        }
+    </script>
+</html>
