@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>3D Scene Renderer</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #ffffff;
+            overflow: hidden;
+            position: relative;
+        }
+        #canvas {
+            display: block;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border: 1px solid #000;
+        }
+        #multiplier {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-family: Arial, sans-serif;
+            font-size: 24px;
+            color: #000;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="multiplier">1</div>
+    <canvas id="canvas" width="800" height="600"></canvas>
+
+    <script>
+        // Utility Functions
+        function dot(x1, y1, z1, x2, y2, z2) {
+            return x1 * x2 + y1 * y2 + z1 * z2;
+        }
+
+        function cx(r, t, p) {
+            return r * Math.cos(t) * Math.cos(p);
+        }
+
+        function cy(r, t, p) {
+            return r * Math.sin(t) * Math.cos(p);
+        }
+
+        function cz(r, t, p) {
+            return r * Math.sin(p);
+        }
+
+        // Camera Class
+        class Camera {
+            constructor() {
+                this.r = 100; // Initial distance from the origin
+                this.t = 0;    // Theta angle
+                this.p = 0;    // Phi angle
+                this.xp = [0, 1, 0];
+                this.yp = [0, 0, 1];
+                this.updateVectors();
+            }
+
+            // Update the camera's spherical coordinates
+            updateVectors() {
+                this.xp[0] = -Math.sin(this.t);
+                this.xp[1] = Math.cos(this.t);
+                this.xp[2] = 0;
+
+                this.yp[0] = -Math.cos(this.t) * Math.sin(this.p);
+                this.yp[1] = -Math.sin(this.t) * Math.sin(this.p);
+                this.yp[2] = Math.cos(this.p);
+            }
+
+            updR(r) {
+                this.r = r;
+            }
+
+            updTheta(t) {
+                this.t = t;
+                this.updateVectors();
+            }
+
+            updPhi(p) {
+                this.p = p;
+                this.updateVectors();
+            }
+
+            addR(r) {
+                this.r += r;
+                this.r = Math.max(10, this.r); // Prevent r from being less than 10
+            }
+
+            addTheta(t) {
+                this.t += t;
+                this.updateVectors();
+            }
+
+            addPhi(p) {
+                this.p += p;
+                // Clamp phi to avoid gimbal lock
+                //this.p = Math.max(0.01, Math.min(Math.PI - 0.01, this.p)); rah gimble lock
+                this.updateVectors();
+            }
+
+            screenx(x, y, z) {
+                return dot(this.xp[0], this.xp[1], this.xp[2], x, y, z);
+            }
+
+            screeny(x, y, z) {
+                return dot(this.yp[0], this.yp[1], this.yp[2], x, y, z);
+            }
+
+            displayPosition(x, y, z) {
+                // Relative position to the camera
+                const pp = [
+                    x - cx(this.r, this.t, this.p),
+                    y - cy(this.r, this.t, this.p),
+                    z - cz(this.r, this.t, this.p)
+                ];
+                // Project to 2D
+                return [
+                    this.screenx(pp[0], pp[1], pp[2]),
+                    this.screeny(pp[0], pp[1], pp[2])
+                ];
+            }
+
+            getTheta() {
+                return this.t;
+            }
+
+            getPhi() {
+                return this.p;
+            }
+
+            getXprime() {
+                return this.xp;
+            }
+
+            getYprime() {
+                return this.yp;
+            }
+        }
+
+        // Initialize Canvas
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const SCREEN_WIDTH = canvas.width;
+        const SCREEN_HEIGHT = canvas.height;
+        const BACKGROUND_COLOR = '#FFFFFF';
+        let multiplier = 1;
+
+        // Utility Functions for Screen Coordinates
+        function addCOSx(x) {
+            return x + SCREEN_WIDTH / 2;
+        }
+
+        function addCOSy(y) {
+            return SCREEN_HEIGHT / 2 - y;
+        }
+
+        // Initialize Camera
+        const c = new Camera();
+
+        // Lines Definitions
+        let xLine = [[0, 0, 0], [50, 0, 0]];
+        let yLine = [[0, 0, 0], [0, 50, 0]];
+        let zLine = [[0, 0, 0], [0, 0, 50]];
+        let floatingLine = [[50, -50, 50], [-50, 50, -50]];
+        let ab = [[-25, -25, -25], [-25, 25, -25]];
+        let ac = [[-25, -25, -25], [-25, -25, 25]];
+        let cd = [[-25, -25, 25], [-25, 25, 25]];
+        let bd = [[-25, 25, -25], [-25, 25, 25]];
+
+        // Corners Definitions (Updated to include corner 0)
+        let corners = [
+            {"corner": 1, "x": -25, "y": -25, "z": -25, "x'": -25, "y'": -25, "z'": -25, "radius": 10, "dragging": false},
+            {"corner": 2, "x": -25, "y": 25,  "z": -25, "x'": -25, "y'": 25,  "z'": -25, "radius": 10, "dragging": false},
+            {"corner": 3, "x": -25, "y": -25, "z": 25, "x'": -25, "y'": -25, "z'": 25, "radius": 10, "dragging": false},
+            {"corner": 4, "x": -25, "y": 25,  "z": 25, "x'": -25, "y'": 25,  "z'": 25, "radius": 10, "dragging": false},
+            {"corner": 0, "x": 30, "y": 30,  "z": 30, "x'": 30, "y'": 30,  "z'": 30, "radius": 10, "dragging": false},
+        ];
+
+        // Variables for Dragging
+        let draggingCorner = null;
+        let offset_x = 0;
+        let offset_y = 0;
+        let loc = [0, 0];
+
+        // Event Listeners
+        window.addEventListener('keydown', (e) => {
+            if (e.key >= '0' && e.key <= '9') {
+                multiplier = parseInt(e.key);
+                if (multiplier === 0) multiplier = 1;
+                document.getElementById('multiplier').innerText = multiplier;
+            }
+        });
+
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouse_x = e.clientX - rect.left;
+            const mouse_y = e.clientY - rect.top;
+            for (let circle of corners) {
+                const pos = c.displayPosition(circle.x, circle.y, circle.z);
+                const screen_x = addCOSx(pos[0]);
+                const screen_y = addCOSy(pos[1]);
+                const dx = mouse_x - screen_x;
+                const dy = mouse_y - screen_y;
+                if (dx * dx + dy * dy <= circle.radius * circle.radius) {
+                    circle.dragging = true;
+                    draggingCorner = circle;
+                    loc = [screen_x, screen_y];
+                    offset_x = screen_x - mouse_x;
+                    offset_y = screen_y - mouse_y;
+                    break;
+                }
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            if (draggingCorner) {
+                draggingCorner.dragging = false;
+                draggingCorner["x'"] = draggingCorner.x;
+                draggingCorner["y'"] = draggingCorner.y;
+                draggingCorner["z'"] = draggingCorner.z;
+                draggingCorner = null;
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (draggingCorner) {
+                const rect = canvas.getBoundingClientRect();
+                const mouse_x = e.clientX - rect.left;
+                const mouse_y = e.clientY - rect.top;
+                const xc = offset_x + mouse_x - loc[0];
+                const yc = offset_y + mouse_y - loc[1];
+                const xp = c.getXprime();
+                const yp = c.getYprime();
+                draggingCorner.x = (xp[0] * xc - yp[0] * yc) + draggingCorner["x'"];
+                draggingCorner.y = (xp[1] * xc - yp[1] * yc) + draggingCorner["y'"];
+                draggingCorner.z = (xp[2] * xc - yp[2] * yc) + draggingCorner["z'"];
+
+                // Update connected lines
+                switch (draggingCorner.corner) {
+                    case 1:
+                        ab[0] = [draggingCorner.x, draggingCorner.y, draggingCorner.z];
+                        ac[0] = [draggingCorner.x, draggingCorner.y, draggingCorner.z];
+                        break;
+                    case 2:
+                        ab[1] = [draggingCorner.x, draggingCorner.y, draggingCorner.z];
+                        bd[0] = [draggingCorner.x, draggingCorner.y, draggingCorner.z];
+                        break;
+                    case 3:
+                        ac[1] = [draggingCorner.x, draggingCorner.y, draggingCorner.z];
+                        cd[0] = [draggingCorner.x, draggingCorner.y, draggingCorner.z];
+                        break;
+                    case 4:
+                        bd[1] = [draggingCorner.x, draggingCorner.y, draggingCorner.z];
+                        cd[1] = [draggingCorner.x, draggingCorner.y, draggingCorner.z];
+                        break;
+                    case 0:
+                        // Handle connections for corner 0 if necessary
+                        break;
+                }
+            }
+        });
+
+        // Keyboard Controls for Camera
+        window.addEventListener('keydown', (e) => {
+            switch (e.key) {
+                case 'ArrowLeft':
+                    c.addTheta(-Math.PI / 720 * multiplier);
+                    break;
+                case 'ArrowRight':
+                    c.addTheta(Math.PI / 720 * multiplier);
+                    break;
+                case 'ArrowUp':
+                    c.addPhi(-Math.PI / 720 * multiplier);
+                    break;
+                case 'ArrowDown':
+                    c.addPhi(Math.PI / 720 * multiplier);
+                    break;
+                case '-':
+                    c.addR(-multiplier);
+                    break;
+                case '+':
+                case '=':
+                    c.addR(multiplier);
+                    break;
+            }
+        });
+
+        // Rendering Functions
+        function line2render(line, color) {
+            const start = c.displayPosition(line[0][0], line[0][1], line[0][2]);
+            const end = c.displayPosition(line[1][0], line[1][1], line[1][2]);
+            ctx.beginPath();
+            ctx.moveTo(addCOSx(start[0]), addCOSy(start[1]));
+            ctx.lineTo(addCOSx(end[0]), addCOSy(end[1]));
+            ctx.strokeStyle = `rgb(${color[0]},${color[1]},${color[2]})`;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        function point2render(point, color, radius) {
+            const center = c.displayPosition(point[0], point[1], point[2]);
+            ctx.beginPath();
+            ctx.arc(addCOSx(center[0]), addCOSy(center[1]), radius, 0, 2 * Math.PI);
+            ctx.fillStyle = `rgb(${color[0]},${color[1]},${color[2]})`;
+            ctx.fill();
+            ctx.strokeStyle = '#000';
+            ctx.stroke();
+        }
+
+        // Add the render_cube function
+        function render_cube(center_x, center_y, center_z, side_length, color) {
+            const hs = side_length / 2;
+
+            const vertices = [
+                [center_x - hs, center_y - hs, center_z - hs],
+                [center_x + hs, center_y - hs, center_z - hs],
+                [center_x + hs, center_y + hs, center_z - hs],
+                [center_x - hs, center_y + hs, center_z - hs],
+                [center_x - hs, center_y - hs, center_z + hs],
+                [center_x + hs, center_y - hs, center_z + hs],
+                [center_x + hs, center_y + hs, center_z + hs],
+                [center_x - hs, center_y + hs, center_z + hs],
+            ];
+
+            const edges = [
+                [0, 1], [1, 2], [2, 3], [3, 0],
+                [4, 5], [5, 6], [6, 7], [7, 4],
+                [0, 4], [1, 5], [2, 6], [3, 7]
+            ];
+
+            const projected_vertices = vertices.map(vertex => {
+                const projected = c.displayPosition(vertex[0], vertex[1], vertex[2]);
+                return [addCOSx(projected[0]), addCOSy(projected[1])];
+            });
+
+            edges.forEach(edge => {
+                const start_pos = projected_vertices[edge[0]];
+                const end_pos = projected_vertices[edge[1]];
+                ctx.beginPath();
+                ctx.moveTo(start_pos[0], start_pos[1]);
+                ctx.lineTo(end_pos[0], end_pos[1]);
+                ctx.strokeStyle = `rgb(${color[0]},${color[1]},${color[2]})`;
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            });
+        }
+
+        // Main Render Loop
+        function render() {
+            // Clear Screen
+            ctx.fillStyle = BACKGROUND_COLOR;
+            ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+            // Draw Axes
+            line2render(xLine, [255, 0, 0]); // X - Red
+            line2render(yLine, [0, 255, 0]); // Y - Green
+            line2render(zLine, [0, 0, 255]); // Z - Blue
+
+            // Draw Square
+            line2render(ab, [200, 255, 0]);
+            line2render(ac, [200, 255, 0]);
+            line2render(bd, [200, 255, 0]);
+            line2render(cd, [200, 255, 0]);
+
+            // Draw Points
+            point2render(ab[0], [200, 255, 0], 5);
+            point2render(ab[1], [200, 255, 0], 5);
+            point2render(ac[1], [200, 255, 0], 5);
+            point2render(bd[1], [200, 255, 0], 5);
+            point2render([corners[4].x, corners[4].y, corners[4].z], [200, 0, 200], 5); // Center point
+
+            // Render the new cube
+            const cubeCenter = [corners[4].x, corners[4].y, corners[4].z];
+            render_cube(cubeCenter[0], cubeCenter[1], cubeCenter[2], 50, [200, 0, 200]);  // Example cube with side_length 50
+
+            // Render Multiplier (handled via HTML)
+
+            requestAnimationFrame(render);
+        }
+
+        // Start Rendering
+        render();
+    </script>
+</body>
+</html>
