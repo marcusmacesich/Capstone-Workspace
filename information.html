@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Python Function Viewer</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #a7b1b7;
+            color: #333;
+        }
+        .navbar {
+            background-color: #ba0c2f;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            color: #fff;
+        }
+        .navbar h1 {
+            font-size: 24px;
+            font-weight: 500;
+        }
+        .container {
+            max-width: 90%;
+            margin: 60px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .function-block {
+            margin-bottom: 20px;
+        }
+        .function-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background-color: #f2f2f2;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .function-header:hover {
+            background-color: #cce5ff;
+        }
+        .function-description {
+            display: none;
+            padding: 10px;
+            margin-top: -1px;
+            background-color: #f9f9f9;
+            border: 1px solid #ccc;
+            border-radius: 0 0 5px 5px;
+            font-size: 14px;
+            color: #333;
+            line-height: 1.4;
+        }
+        .function-header.active + .function-description {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1>Python Function Viewer</h1>
+    </div>
+    <div class="container">
+        <script>
+            const functions = [
+                {
+                    name: "__init__",
+                    parameters: ["self"],
+                    description: "No description has been written yet."
+                },
+                {
+                    name: "pos_array",
+                    parameters: ["self"],
+                    description: "No description has been written yet."
+                },
+                {
+                    name: "checklim",
+                    parameters: ["self", "id", "angle"],
+                    description: "No description has been written yet."
+                },
+                {
+                    name: "checklim6",
+                    parameters: ["self", "joints"],
+                    description: "No description has been written yet."
+                },
+                {
+                    name: "Arm_serial_servo_write",
+                    parameters: ["self", "id", "angle", "time"],
+                    description: "No description has been written yet."
+                },
+                {
+                    name: "Arm_serial_servo_write_any",
+                    parameters: ["self", "id", "angle", "time"],
+                    description: "No description has been written yet."
+                },
+                {
+                    name: "Arm_serial_servo_write_offset_switch",
+                    parameters: ["self", "id"],
+                    description: "No description has been written yet."
+                },
+                {
+                    name: "Arm_serial_servo_write_offset_state",
+                    parameters: ["self"],
+                    description: "No description has been written yet."
+                },
+                {
+                    name: "Arm_serial_servo_write6_array",
+                    parameters: ["self", "joints", "time"],
+                    description: "No description has been written yet."
+                },
+                {
+                    name: "Arm_serial_servo_write6",
+                    parameters: ["self", "s1", "s2", "s3", "s4", "s5", "s6", "time"],
+                    description: "No description has been written yet."
+                },
+                {
+                    name: "Arm_serial_servo_read",
+                    parameters: ["self", "id"],
+                    description: "No description has been written yet."
+                },
+                {
+                    name: "Arm_serial_servo_read_any",
+                    parameters: ["self", "id"],
+                    description: "No description has been written yet."
+                },
+                {
+                    name: "Arm_ping_servo",
+                    parameters: ["self", "id"],
+                    description: "No description has been written yet."
+                },
+                {
+                    name: "Arm_get_hardversion",
+                    parameters: ["self"],
+                    description: "No description has been written yet."
+                },
+                {
+                    name: "Arm_serial_set_torque",
+                    parameters: ["self", "onoff"],
+                    description: "No description has been written yet."
+                },
+                {
+                    name: "Arm_serial_set_id",
+                    parameters: ["self", "id"],
+                    description: "No description has been written yet."
+                },
+                {
+                    name: "Arm_Product_Select",
+                    parameters: ["self", "index"],
+                    description: "No description has been written yet."
+                },
+                {
+                    name: "Arm_RGB_set",
+                    parameters: ["self", "red", "green", "blue"],
+                    description: "No description has been written yet."
+                },
+                {
+                    name: "Arm_Button_Mode",
+                    parameters: ["self", "mode"],
+                    description: "No description has been written yet."
+                },
+                {
+                    name: "Arm_reset",
+                    parameters: ["self"],
+                    description: "No description has been written yet."
+                },
+                {
+                    name: "Arm_PWM_servo_write",
+                    parameters: ["self", "id", "angle"],
+                    description: "No description has been written yet."
+                },
+                {
+                    name: "Arm_Clear_Action",
+                    parameters: ["self"],
+                    description: "No description has been written yet."
+                },
+                {
+                    name: "Arm_Action_Study",
+                    parameters: ["self"],
+                    description: "No description has been written yet."
+                },
+                {
+                    name: "Arm_Action_Mode",
+                    parameters: ["self", "mode"],
+                    description: "No description has been written yet."
+                },
+                {
+                    name: "Arm_Read_Action_Num",
+                    parameters: ["self"],
+                    description: "No description has been written yet."
+                },
+                {
+                    name: "Arm_Buzzer_On",
+                    parameters: ["self", "delay"],
+                    description: "No description has been written yet."
+                },
+                {
+                    name: "Arm_Buzzer_Off",
+                    parameters: ["self"],
+                    description: "No description has been written yet."
+                },
+                {
+                    name: "bus_servo_control",
+                    parameters: ["self", "id", "num", "time"],
+                    description: "No description has been written yet."
+                },
+                {
+                    name: "__change_value",
+                    parameters: ["self", "value"],
+                    description: "No description has been written yet."
+                },
+                {
+                    name: "bus_servo_control_array6",
+                    parameters: ["self", "array", "time"],
+                    description: "No description has been written yet."
+                },
+                {
+                    name: "cos_deg",
+                    parameters: ["self", "angle"],
+                    description: "No description has been written yet."
+                },
+                {
+                    name: "sin_deg",
+                    parameters: ["self", "angle"],
+                    description: "No description has been written yet."
+                },
+                {
+                    name: "get_pos_xyz",
+                    parameters: ["self"],
+                    description: "No description has been written yet."
+                },
+                {
+                    name: "get_pos_xyz_proj",
+                    parameters: ["self", "joints"],
+                    description: "No description has been written yet."
+                },
+                {
+                    name: "pos_feedback_adjust",
+                    parameters: ["self", "id", "angle"],
+                    description: "No description has been written yet."
+                }
+            ];
+
+            functions.forEach(func => {
+                document.write(`
+                    <div class="function-block">
+                        <div class="function-header">
+                            <span>${func.name}(${func.parameters.join(", ")})</span>
+                        </div>
+                        <div class="function-description">${func.description}</div>
+                    </div>
+                `);
+            });
+
+            document.querySelectorAll('.function-header').forEach(header => {
+                header.addEventListener('click', () => {
+                    header.classList.toggle('active');
+                });
+            });
+            
+            /*
+            * The function changes the display type of the extra content
+            * None hides the code, while block show it
+            * Also changes the arrow direction.
+            * 
+            * No changes to the variables.
+            */
+            function toggleDropdown(event, blockId) {
+                event.stopPropagation();
+                const block = document.getElementById(`textBlock${blockId}`);
+                const extraContent = document.getElementById(`extraContent${blockId}`);
+                const button = block.querySelector('.dropdown-button');
+
+                if (extraContent.style.display === 'block') {
+                    extraContent.style.display = 'none';
+                    button.innerHTML = '▲';
+                } else {
+                    extraContent.style.display = 'block';
+                    button.innerHTML = '▼';
+                }
+            }
+        </script>
+    </div>
+</body>
+</html>
