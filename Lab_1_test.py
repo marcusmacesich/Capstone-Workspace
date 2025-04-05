@@ -5,7 +5,7 @@ Arm = Arm_Device1()
 time.sleep(.1)
 
 #send home 
-Arm.Arm_serial_servo_write6_array([90 90 90 90 90 90],4000)
+Arm.Arm_serial_servo_write6_array([90, 90, 90, 90, 90, 90],4000)
 
 #read home angles
 jointsAng = Pos_array()
@@ -22,7 +22,7 @@ Arm_serial_servo_write(2, 90, 1000)
 Serv2_90 =Get_pos_xyz()
 print(Serv2_90)
 #Reset
-Arm.Arm_serial_servo_write6_array([90 90 90 90 90 90],4000)
+Arm.Arm_serial_servo_write6_array([90, 90, 90, 90, 90, 90],4000)
 
 #Send Servo 3 to 0 & 90 and read
 Arm_serial_servo_write(3, 0, 1000)
@@ -32,7 +32,7 @@ Arm_serial_servo_write(3, 90, 1000)
 Serv3_90 =Get_pos_xyz()
 print(Serv3_90)
 #Reset
-Arm.Arm_serial_servo_write6_array([90 90 90 90 90 90],4000)
+Arm.Arm_serial_servo_write6_array([90, 90, 90, 90, 90, 90],4000)
 
 #Send Servo 4 to 0 & 90 and read
 Arm_serial_servo_write(4, 0, 1000)
@@ -42,7 +42,7 @@ Arm_serial_servo_write(4, 90, 1000)
 Serv4_90 =Get_pos_xyz()
 print(Serv4_90)
 #Reset
-Arm.Arm_serial_servo_write6_array([90 90 90 90 90 90],4000)
+Arm.Arm_serial_servo_write6_array([90, 90, 90, 90, 90, 90],4000)
 
 #send servo 4 to 0 and 90 deg and and read position coordinates
 Arm_serial_servo_write(4, 90, 1000)
