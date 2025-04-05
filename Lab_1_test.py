@@ -1,7 +1,7 @@
 import numpy as np
 from Arm_Lib_New import Arm_Device1
 import time
-Arm = Arm_Device190
+Arm = Arm_Device1()
 time.sleep(.1)
 
 #send home 
