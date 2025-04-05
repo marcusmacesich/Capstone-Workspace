@@ -1,5 +1,5 @@
-inport numpy as np
-from Arm_Lib_New inport Arm_Device1
+import numpy as np
+from Arm_Lib_New import Arm_Device1
 import time
 Arm = Arm_Device190
 time.sleep(.1)
@@ -50,14 +50,3 @@ print(Get_pos_xyz())
 #send servo 1 to 90 and 180 deg and read position coordinates
 Arm_serial_servo_write(1, 180, 1000)
 print(Get_pos_xyz())
-
-#Part 2 - Pick and place
-# follow directions in lab manual to perform the following task
-#start in home position
-#open gripper (servo 6) to 180 deg
-#close gripper (servo 6) to XXX degrees
-#return home
-#place block in position 2
-#open grippers
-#return home
-#record final servo andles and position coordinates necessary to perform this task
