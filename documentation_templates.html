@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<style>
+    body {
+        font-family: sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f4f4;
+        color: #333;
+    }
+
+    header {
+        background-color: #333;
+        color: #fff;
+        padding: 20px 0;
+        text-align: center;
+    }
+
+    header h1 {
+        margin: 0;
+    }
+
+    header nav {
+        margin-top: 10px;
+    }
+
+    header nav a {
+        color: #fff;
+        text-decoration: none;
+        margin: 0 15px;
+    }
+
+    main {
+        padding: 20px;
+        max-width: 960px; /* Adjust as needed */
+        margin: 20px auto;
+        background-color: #fff;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    section {
+        margin-bottom: 30px;
+    }
+
+    h2, h3 {
+        color: #333;
+        border-bottom: 2px solid #eee;
+        padding-bottom: 5px;
+    }
+
+    /* Style for code blocks */
+    pre {
+        background-color: #f0f0f0;
+        padding: 15px;
+        border-radius: 5px;
+        overflow-x: auto; /* Enable horizontal scrolling for long code lines */
+    }
+
+    /* Style for JSON Tool */
+    #json-tool {
+        border: 1px solid #ccc;
+        padding: 20px;
+        border-radius: 5px;
+        margin-top: 20px;
+    }
+
+    #json-inputs {
+        margin-bottom: 15px;
+    }
+
+    .json-pair {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .json-pair label {
+        margin-right: 10px;
+        width: 50px; /* Adjust label width */
+        text-align: right;
+    }
+
+    .json-pair input[type="text"] {
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        flex-grow: 1; /* Input fields take up remaining space */
+    }
+
+    .json-pair button {
+        margin-left: 10px;
+        padding: 8px 12px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        background-color: #f0f0f0;
+        cursor: pointer;
+    }
+
+    .json-pair button:hover {
+        background-color: #e0e0e0;
+    }
+
+    #json-output {
+        margin-top: 15px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        padding: 10px;
+        background-color: #f9f9f9;
+    }
+
+    footer {
+        text-align: center;
+        padding: 20px 0;
+        background-color: #333;
+        color: #fff;
+    }
+
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Project Documentation</title>
+    <link rel="stylesheet" href="style.css"> <!-- Link to your CSS file -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"> <!-- Syntax highlighting CSS (choose a theme) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script> <!-- Syntax highlighting JS -->
+</head>
+<body>
+
+    <header>
+        <h1>Documentation for the templates</h1>
+        <nav>
+            <a href="#section1">Overview of the templates pages</a>
+            <a href="#section2">Technical details of the templates upload</a>
+            <a href="#section2b">Technical details of the templates upload page on adding a template</a>
+            <a href="#section2c">Technical details of the templates upload page on removing a template</a>
+            <a href="#section3">Technical details of the templates page</a>
+            </nav>
+    </header>
+
+    <main>
+        <section id="section1">
+            <h2>Overview of the templates pages</h2>
+            <p>The templates page is split into 2 parts, the view that students can see under codetemplates, and a backend helper under manage_templates. These two views are intended to give students more than just an inserted function if needed.</p>
+            <p>On the students end on the codetemplates page, once a selected, a template can be copied to both the clipboard and to the IDE enviroment by clicking the copy selected text button. This is done automatically. Same with the upload python section, where a student can upload and load a file into the editior by going though the choose file button, then if they uploaded a pyhton file, can copy it to the editor using the Load File to Editor button. </p>
+            <p>The second important page in this process is the add code templates page. Under the hood, this page is more complex, but superfically it is simple enough to be used by administrators. To add a template, one must upload a python file, then write a name that the students will see the file as on the codetemplates page and select the submit button. Any errors that may happen are shown in the console on the html page. Each uploaded python script is underneath this upload page. To save space, the code is hidden unless selected to be shown. The remove button on the right side of the will remove the code from this page and the templates page. </p>
+        </section>
+
+        <section id="section2">
+            <h2>Technical details of the templates upload</h2>
+            <p>Under the hood, there are 3 important stages of uploading a template onto the webserver; there are on load, upload and remove. Starting with loading templates to a site, there are 2 key backend components to this process; this is the names file and the python files stored in the backend under files/CodeTemplates. The first thing the page does is load the names.txt file from the backend. </p>
+            <h3>Requesting the content of names.txt from the backend</h3>
+            <pre><code class = 'javascript'>
+fetch('/get-template-names/')
+.then(response => response.text())
+.then(async (data) => {
+    let lines = data.split('\n');
+    lines = lines.filter((item) => item.length !== 0);
+
+    for (const element of lines) {
+        let fileSeekNames = element.split(":");
+        for (let i = 0; i < fileSeekNames.length; i++) {
+            if (i % 2 === 1) {
+                await displayTextFileContent(fileSeekNames[i], fileSeekNames[i - 1]);
+            }
+        }
+    }
+})
+.catch(error => console.error('Error fetching rules:', error));
+            </code></pre>
+            <h3>Loading in the names from the backend</h3>
+            <pre><code class = 'python'>
+def get_template_names(request):
+    with open('./interface/files/CodeTemplates/names.txt', 'r') as file:
+        names = file.read()
+    return HttpResponse(names, content_type="text/plain")
+            </code></pre>
+            <p>This code makes a call to the url /get-template-names/, which when called executes the code below. As seen, the return is not names.txt; rather it is the contents of the file as text. The names.txt formatting is as follows:</p>
+            <p>Display_name:name_of_python_file.py</p>
+            <p>where each entry is on a seperate row. The page will load the templates in the order that they appear on they appear in names.txt. The last key part of this is the displayTextFileContent() which as seen below, formats the given input name and python file and retrives the data in the .py file.</p>
+            <h3>Loading the .py files and preparing the content to be seen on the page.</h3>
+            <pre><code class = 'javascript'>
+async function displayTextFileContent(fileName, displayName) {
+    const fileContent = await fetchTextFile(fileName); // Wait for the promise to resolve
+    //console.log(fileContent); // Logs the fetched file content or error
+    currentUploadedCode = fileContent;
+    let output  = "Name of file: " + fileName + "|" + "Display name on templates: "+displayName;
+    appendText(output,true, fileName, displayName); // Pass filename and display name
+}
+            </code></pre>
+            <h3>Retriving the .py code form the backend</h3>
+            <pre><code class = 'javascript'>
+async function fetchTextFile(fileName) {
+    return fetch(`/fetch_text_file/?file_name=${encodeURIComponent(fileName)}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('File not found or error fetching file.');
+            }
+            return response.text();
+        })
+        .then(data => {
+            return data;
+        })
+        .catch(error => {
+            return error.message;
+        });
+}
+            </code></pre>
+            <h3>Loading in the .py code from the backend</h3>
+            <pre><code class = 'python'>
+def fetch_text_file(request):
+    # Get the file name from the query parameters
+    file_name = request.GET.get('file_name', '')
+    
+    # Create the full path to the file
+    file_path = './interface/files/CodeTemplates/' + file_name
+    
+    # Check if the file exists and is safe to access
+    try:
+        with open(file_path, 'r') as file:
+            content = file.read()
+        return HttpResponse(content, content_type='text/plain')
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'File not found or invalid file name.'}, status=404)
+            </code></pre>
+            <p>Getting the code from the backend is done using the helper function fetchTextFile, which interacts with the view seen below it. The view is a slightly more complicated version of the get_template_names function, where the increase in complexity comes from the view needing to get the file specified in the input, rather than the the same file every time. This view also returns the content as a string of text rather than the python file itself. From there, this data is fromatted and piped to the function appendText which is part of the adding templates procedure. This process of fetching templates is looped trhough by the orignal function on loading until every pair in names.txt is process and loaded to the page.</p>
+        </section>
+        <section id="section2b">
+            <h2>Technical details of the templates upload page on adding a template</h2>
+            <p>The machenery of adding a template occurs when the Add File button is pressed and all of the conditions are met to upload a template. The javasript enters to the routine of adding a template through an appendElement(), as seen below.</p>
+            <h3>Retriving the .py code form the backend</h3>
+            <pre><code class = 'javascript'>
+function appendElement() {
+    let filename = customNameInput.value;
+    if(filename === "" && currentUploadedCode === ""){
+        alert("No name was chosen or code uploaded for template page display!");
+    }
+    if(filename === ""){
+        alert("No name was chosen for template page display!");
+    }
+    if(currentUploadedCode === ""){
+        alert("No code was uploaded for template page display!")
+    }
+    else{
+        let output  = "Name of file: " + currentFileName + "|" + "Display name on templates: "+filename;
+        let write = "templateWrite\n"+currentFileName+"\n"+filename+"\n"+currentUploadedCode;
+        const fname = currentFileName;
+        sendDataToDjango(write);
+        fetch('/get-template-names/')
+        .then(response => response.text())
+        .then(data => {
+            let write2 = "namesWrite\nnames.txt\n"+data+filename+":"+fname+"\n";
+            sendDataToDjango(write2);
+        })
+        .catch(error => console.error('Error fetching rules:', error));
+        appendText(output,true, currentFileName, filename); // Pass filename and display name
+        //console.log(output);
+        currentUploadedCode = ""; // Clear currentUploadedCode after appending
+        currentFileName = ""; // Clear currentFileName after appending
+        fileNameDisplay.textContent = 'No file selected.'; // Reset file display
+        fileInput.value = ''; // Clear file input
+        customNameInput.value = ''; // Clear custom name input
+    }
+}
+            </code></pre>
+            <p>The code for appendElement formats the inputs for 2 important steps, sending the python file and the name that the file should be displayed as on the templates page to the backend, and the format to get the template appended to the page. This function also clears the inputs after these 2 functions are completed</p>
+            <p>To start, the format for getting the file to interact with the backend is as follows:</p>
+            <p>command</p>
+            <p>file_name</p>
+            <p>content or displayname, depends on the command</p>
+            <p>content...</p>
+            <p>For adding a template, the 3rd item is the displayname. In the code, these are split up by newlines(\n). The content is the code as a text string. Once the text is fomated in this way, the function sendDataToDjango() is used to send the data to the backend.</p>
+            <h3>sendDataToDjango function</h3>
+            <pre><code class = 'javascript'>
+async function sendDataToDjango(data) {
+    const csrfToken = getCsrfToken();
+
+    const response = await fetch('/handle_text_data/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({ text: data })
+    });
+    
+    if (!response.ok) {
+        throw new Error('Failed to send data to the server');
+    }
+
+    const responseData = await response.json();
+    console.log(responseData);
+    return responseData;
+}
+            </code></pre>
+            <h3>Backend for adding a template</h3>
+            <pre><code class = 'python'>
+def handle_text_data(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            text = data.get('text', '')
+            # Validate text
+            if not isinstance(text, str):
+                return JsonResponse({'error': 'Invalid input'}, status=400)
+
+            if text[:13] == "templateWrite":
+                try:
+                    write_to_file(text)
+
+                    return JsonResponse({'status': 'success', 'message': 'Templates updated successfully!'})
+                except Exception as e:
+                    return JsonResponse({'status': 'error', 'message': str(e)})
+            ...
+                
+            if text[:10] == "namesWrite":
+                try:
+                    lines = text.splitlines()
+                    filename = lines[1]
+                    content="\n".join(lines[2:])
+                    with open('./interface/files/CodeTemplates/'+filename, "w") as file:
+                        file.write(content)
+                    return JsonResponse({'status': 'success', 'message': 'Names file updated successfully!'})
+                except Exception as e:
+                    return JsonResponse({'status': 'error', 'message': str(e)})
+            ...
+                
+            # Process text (e.g., save to the database, etc.)
+            return JsonResponse({'message': 'Data received successfully, no updates to rules or functions'})
+
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
+            </code></pre>
+            <p>Most of the work is handled by the backend. As seen, most of the formating in the javascript is done before calling sendDataToDjango. sendDataToDjango implements the call to the url for handle_text_data.</p>
+            <p>For the handle_text_data, the input is not tested by splitting the format as prviously mmentioned, but by checking the first n character that are the length of the expected command. Then, a helper function is used in the write to file code, while in the names write it is done in the if statement. The code for the write_to_file is given below.</p>
+            <h3>Backend for writing to a file</h3>
+            <pre><code class = 'python'>
+def write_to_file(input_string):
+    # Split the input string by lines
+    lines = input_string.splitlines()
+
+    # Validate that there's at least three lines
+    if len(lines) < 3:
+        raise ValueError("Input format is invalid. At least three lines are required.")
+
+    # Extract the first line, filename, and content
+    header = lines[0]
+    filename = lines[1]
+    displayname = lines[2]
+    content = "\n".join(lines[3:])
+
+    # Validate the header
+    if not header.strip() == "templateWrite":
+        raise ValueError("The first line must be 'templateWrite'.")
+
+    # Check for invalid cases where 'templateWrite' is detected but format is wrong
+    if "templateWrite" in input_string and header.strip() != "templateWrite":
+        raise ValueError("The substring 'templateWrite' is detected but the format is incorrect.")
+
+    # Write content to the file
+    with open('./interface/files/CodeTemplates/'+filename, "w") as file:
+        file.write(content)
+
+    new_item = code_templates.objects.create(name=filename, description=f"{displayname}", value=content)
+    print(f"Created item with ID: {new_item.id}")
+    print(f"Content successfully written to {filename}.")                
+            </code></pre>
+            <p>The python code takes the input and assumes that the input string follows the format previously specified. The code extracts the file path and writes the content ot the file. The code also has a good amount of error handling to let the uploader know what has gone wrong if something does.</p>
+            <p></p>
+            <p>Back to the appendElement function, the page outputs the response, then moves to appending the template to the website. This is done using, as seen below, the appendText function. The last 5 lines of code clear the input fields.</p>
+            <h3>Code to append a template to view on the website.</h3>
+            <pre><code class = 'javascript'>
+function appendText(text, code, filename, displayName) { // Added filename and displayName parameters
+    if (text.trim() !== "") {
+        const newElement = document.createElement('div'); // Changed to div for flexbox layout
+        let textContainer = document.createElement('div'); // Container for text
+        let items = text.split('|');
+        items.forEach(item => {
+            const innerElement = document.createElement('p');
+            innerElement.textContent = item.trim();
+            textContainer.appendChild(innerElement);
+        });
+
+        if(code){
+            $(textContainer).append(
+                '&ltbutton onclick="ToggleCode('+numberOfCodeElements+')"&gtShow Code$lt/button&gt'
+            );
+            $(textContainer).append(
+                '&ltdiv id="code'+numberOfCodeElements+'" style="display: none;"&gt&ltpre&gt'+currentUploadedCode+'&lt/pre&gt&lt/div&gt'
+            );
+            numberOfCodeElements = numberOfCodeElements + 1;
+        }
+        
+        newElement.appendChild(textContainer); // Append text container to the main element
+
+        // Add remove button
+        let removeButton = document.createElement('button');
+        removeButton.textContent = 'Remove';
+        removeButton.onclick = function() { removeElement(filename, displayName, newElement); }; // Pass filename and displayName
+        newElement.appendChild(removeButton);
+        
+        newElement.classList.add('appended-element');
+        document.getElementById('outputContainer').appendChild(newElement);
+    }
+}
+        </code></pre>
+        <p>This function takes in the raw, formatted text and "stylizes" it and puts it onto the page. </p>
+        <p>"Name of file: " + currentFileName + "|" + "Display name on templates: "+filename</p>
+        <p>This function will be transform this string into the folowing on the page</p>
+        <p>Name of file: currentFileName </p>
+        <p>Display name on templates: filename</p>
+        <p>In case something needed to be added without code, the code adding section could be turned off. However, this page does not use this functionality. In the current code, the code that corresponds with the python file is taken from the inputted file - this is done before the input is cleared - and is added to an element that gets added to the input element. This element has a button added that changes that allows the code to be displayed. The default display position is the code not being shown. Lastly, another element is added to the main element to include a remove button that activates the remove functionality, discussed below. Once the carrier element is added to the input element and returns, the adding content section is complete. </p>
+
+        <h3>Removing code from the document enters here.</h3>
+        <pre><code class = 'javascript'>
+function removeElement(filename, displayName, elementToRemove) { // Added displayName and elementToRemove parameters
+    let remove = "templateRemove\n" + filename;
+    sendDataToDjango(remove);
+
+    fetch('/get-template-names/')
+    .then(response => response.text())
+    .then(data => {
+        // Remove the entry from names.txt in backend.
+        // Assuming names.txt format is "displayName:filename" per line
+        let lines = data.split('\n');
+        lines = lines.filter(line => line !== `${displayName}:${filename}` && line.trim() !== ''); // Filter out the line to remove and empty lines
+        let updatedNamesContent = lines.join('\n');
+        let writeNames = "namesWrite\nnames.txt\n" + updatedNamesContent + "\n\n";
+        sendDataToDjango(writeNames);
+    })
+    .catch(error => console.error('Error fetching names:', error));
+    
+    
+    // Remove the element from the display
+    outputContainer.removeChild(elementToRemove);
+}
+        </code></pre>
+        <p>The removal section has less steps than adding something to the page or the backend. The function is called whenever one of the remove buttons is pressed. The code then sends a remove request to the backend, which uses the same mechinism as the writing, as the sent data interpreter is the same. This then get routed to the function that removes the python files, as seen below. The next step of the process is to edit the names.txt file on the backend so future calls do not try and pull the deleted file and so it doesn't show up on the templates page. As the format is simple for the txt file, the code gets the text content of the file, then removes the line that corresponds to the template being used. This chaged text is then wrote to the names.txt file, same as when adding a template. The final thing the function does is removes the coresponding carrier element from the page.</p>
+        
+        
+        <h3>Removing code from the backend</h3>
+        <pre><code class = 'python'>
+def remove_file(input_string):
+    lines = input_string.split()
+    prompt = lines[0]
+    name_to_delete = lines[1]
+    flag = False
+    all_items = code_templates.objects.all()
+    for item in all_items:
+        if [all_strings for all_strings in input_string.split() if "delete_all" in all_strings]:
+            item.delete()
+            file_path = f'./interface/files/CodeTemplates/{item.name}'
+            os.remove(file_path)
+        if item.name == name_to_delete:
+            try:
+                item.delete()
+                file_path = f'./interface/files/CodeTemplates/{name_to_delete}'
+                os.remove(file_path)
+                flag = True
+                print(f"Item {item.name} deleted successfully.")
+            except code_templates.DoesNotExist:
+                print(f"Item {name_to_delete} was not deleted.")
+    if not flag:
+        print(f"Item {name_to_delete} not found for deletion.")
+        </code></pre>
+        </section>
+
+
+
+
+
+
+
+
+
+
+
+
+            <section id="section3">
+                <h2>Technical details of the templates page</h2>
+                <p>The backend for the templates page borrows some from the adding templates, namely in getting files and the names from the backend. The other part of the page that is technical is the copying code.</p>
+                <h3>Populating the page with the code tmeplates</h3>
+                <pre><code class = 'javascript'>
+var labs = 1;
+fetch('/get-template-names/')
+.then(response => response.text())
+.then(async (data) => {
+    let lines = data.split('\n');
+    lines = lines.filter((item) => item.length !== 0);
+
+    for (const element of lines) {
+        let fileSeekNames = element.split(":");
+        for (let i = 0; i &lt fileSeekNames.length; i++) {
+            if (i % 2 === 1) {
+                await displayTextFileContent(fileSeekNames[i], fileSeekNames[i - 1]);
+            }
+        }
+    }
+})
+.catch(error => console.error('Error fetching rules:', error));
+                </code></pre>
+                <p>The first thing that the page does is load the templates. This is done in a similar way to the add templates page. The code for this only differs is in displayTextFileContent.</p>
+                
+                <h3>Displaying the templates to the page</h3>
+                <pre><code class = 'javascript'>
+async function displayTextFileContent(fileName, displayName) {
+    const fileContent = await fetchTextFile(fileName); // Wait for the promise to resolve
+    $("#append").append(
+        '&ltdiv class="text-block" id="textBlock'+labs+'" onclick="selectBlock('+labs+')">\n'+
+        '&ltdiv class="text-content">'+displayName+'&lt/div>\n'+
+        '&ltbutton class="dropdown-button" onclick="toggleDropdown(event, '+labs+')">▲&lt/button>\n'+
+        '&lt/div>\n'+
+        '&ltdiv class="extra-content" id="extraContent'+labs+'">&ltpre>\n'+
+        fileContent+
+        '&lt/pre>&lt/div>'
+    );
+    labs = labs + 1;
+}
+                </code></pre>
+                <p>The function is changed from how it is in add templates to make the added templates better looking. THe core functionality of pulling form the backend using the fetchTextFile function is unchanged. The async is so that the templates will load in the order specified in the names.txt file. See the previous section for how fetchTextFile works.</p>
+
+                <h3>Displaying the templates on the page</h3>
+                <pre><code class = 'javascript'>
+function toggleDropdown(event, blockId) {
+    event.stopPropagation();
+    const block = document.getElementById(`textBlock${blockId}`);
+    const extraContent = document.getElementById(`extraContent${blockId}`);
+    const button = block.querySelector('.dropdown-button');
+
+    if (extraContent.style.display === 'block') {
+        extraContent.style.display = 'none';
+        button.innerHTML = '▲';
+    } else {
+        extraContent.style.display = 'block';
+        button.innerHTML = '▼';
+    }
+}
+                </code></pre>
+                <p>This function un-hides the element that holds the code. It also changes the arrow to act as a visual indicator of the display state.</p>
+
+                <h3>Selecting a block</h3>
+                <pre><code class = 'javascript'>
+let selectedBlockId = null;
+
+function selectBlock(blockId) {
+    if (selectedBlockId) {
+        document.getElementById(`textBlock${selectedBlockId}`).classList.remove('selected');
+    }
+    selectedBlockId = blockId;
+    document.getElementById(`textBlock${blockId}`).classList.add('selected');
+}
+                </code></pre>
+                <p>The first step in the chain of copying code from the templates page to the IDE is the selection. The code uses a tag on the actual elem,ent and a global variable to keep track of which element is selected. This tag also makes the block change color. This block is used to keep track of the changes and keep both parts in sync.</p>
+            
+                <h3>Copying a template</h3>
+                <pre><code class = 'javascript'>
+async function copySelectedText() {
+    console.log("copySelectedText function called");
+    if (selectedBlockId) {
+        const selectedText = document.getElementById(`extraContent${selectedBlockId}`).textContent.trim();
+        
+        const clipboardSuccess = await copyToClipboard(selectedText);
+        const localStorageSuccess = copyToLocalStorage(selectedText);
+        
+        if (clipboardSuccess && localStorageSuccess) {
+            alert('Selected text copied to workspace and clipboard!');
+        } else if (clipboardSuccess) {
+            alert('Selected text copied to clipboard, but failed to save to workspace.');
+        } else if (localStorageSuccess) {
+            alert('Selected text saved to workspace, but failed to copy to clipboard.');
+        } else {
+            alert('Failed to copy text to clipboard and workspace.');
+        }
+        
+    } else {
+        alert('Please select a block first.');
+    }
+}
+                </code></pre>
+                <p>When the user clicks the copy for the code templates, this is the function that is called. This gets the python code from the selected element, and using the 2 helper functions copies it to the IDE using local storage and to the clipboard using a wrapper function. They are split up because it didn't work when they were combined. </p>     
+                
+                <h3>Copying to local storage</h3>
+                <pre><code class = 'javascript'>
+function copyToLocalStorage(text) {
+    try {
+        localStorage.setItem("codeText", text);
+        return true; // Indicate success
+    } catch (err) {
+        console.error('Failed to save to local storage:', err);
+        return false; // Indicate failure
+    }
+}
+                </code></pre>
+                <p>This function works by adding the inputed text to local storage. Using local storage was chosen to make it easy to retain the code if the browser was closed or reloaded. The function also has some debug statements.</p>
+
+                <h3>Uploading code helper function</h3>
+                <pre><code class = 'javascript'>
+document.getElementById('inputfile').addEventListener('change', function () {
+    let fr = new FileReader();
+    fr.onload = function () {
+        // Display the file content in the output section
+        document.getElementById('output').textContent = fr.result;
+        console.log('File content loaded:', fr.result);
+    };
+    fr.readAsText(this.files[0]);
+});
+                </code></pre>
+                <p>This helper function takes the content of an uploaded file and puts it into the element on the page. The uploaded file is assumed to be a python file. This text should be sanitized in some way in the future.</p>
+
+                <h3>Copying uploaded code</h3>
+                <pre><code class = 'javascript'>
+document.getElementById('load-to-editor-btn').addEventListener('click', async function () { // Make the event listener async
+    console.log("load-to-editor-btn event listener triggered");
+    const fileContent = document.getElementById('output').textContent;
+    if (fileContent.trim()) {
+        
+        const clipboardSuccess = await copyToClipboard(fileContent.trim());
+        const localStorageSuccess = copyToLocalStorage(fileContent.trim());
+        
+        if (clipboardSuccess && localStorageSuccess) {
+            alert('Uploaded code added to workspace and clipboard!');
+        } else if (clipboardSuccess) {
+            alert('Uploaded code copied to clipboard, but failed to save to workspace.');
+        } else if (localStorageSuccess) {
+            alert('Uploaded code saved to workspace, but failed to copy to clipboard.');
+        } else {
+            alert('Failed to copy uploaded code to clipboard and workspace.');
+        }
+            
+    } else {
+        alert('No file content to load. Please upload a file first.');
+    }
+});
+                </code></pre>
+                <p>This is the code that runs when the copy button is pressed for uploaded code. Other than how the function is called and where it gets the content from, it is the same as the one for the templates.</p>
+
+            </section>
+    </main>
+
+    <footer>
+        <p>© 2025 ECE Capstone Team 1. Zero rights reserved.</p>
+    </footer>
+
+    <script>
+    </script>
+    <script>hljs.highlightAll();</script>
+</body>
+</html>
