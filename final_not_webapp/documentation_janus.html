@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Janus WebRTC Documentation</title>
+    <!-- THIS STYLE BLOCK IS COPIED DIRECTLY FROM YOUR FIRST FILE -->
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 20px 0;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+        }
+
+        header nav {
+            margin-top: 10px;
+        }
+
+        header nav a {
+            color: #fff;
+            text-decoration: none;
+            margin: 0 15px;
+        }
+
+        main {
+            padding: 20px;
+            max-width: 960px; /* Adjust as needed */
+            margin: 20px auto;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        section {
+            margin-bottom: 30px;
+        }
+
+        h2, h3 {
+            color: #333;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 5px;
+        }
+
+        /* Style for code blocks */
+        pre {
+            background-color: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto; /* Enable horizontal scrolling for long code lines */
+        }
+
+        /* Style for JSON Tool (Kept from original template for completeness) */
+        #json-tool {
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        #json-inputs {
+            margin-bottom: 15px;
+        }
+
+        .json-pair {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .json-pair label {
+            margin-right: 10px;
+            width: 50px; /* Adjust label width */
+            text-align: right;
+        }
+
+        .json-pair input[type="text"] {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            flex-grow: 1; /* Input fields take up remaining space */
+        }
+
+        .json-pair button {
+            margin-left: 10px;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            background-color: #f0f0f0;
+            cursor: pointer;
+        }
+
+        .json-pair button:hover {
+            background-color: #e0e0e0;
+        }
+
+        #json-output {
+            margin-top: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+        /* End JSON Tool Styles */
+
+        footer {
+            text-align: center;
+            padding: 20px 0;
+            background-color: #333;
+            color: #fff;
+        }
+
+    </style>
+    <!-- Syntax highlighting CSS (also from your first file) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <!-- Syntax highlighting JS (also from your first file) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+</head>
+<body>
+
+    <header>
+        <h1>Janus WebRTC Documentation</h1>
+        <nav>
+            <a href="#introduction">Introduction</a>
+            <a href="#installation">Installation</a>
+            <a href="#python-stream">Python Streaming</a>
+            <a href="#website-backend">Website Backend</a>
+            <a href="#text-transfer-python">Python Text Transfer</a>
+            <a href="#website-text-transfer">Website Text Transfer</a>
+        </nav>
+    </header>
+
+    <main>
+        <section id="introduction">
+            <h2>Introduction</h2>
+            <p>For implementing many-to-many video capabilities for the website, Janus by Meetecho - see the <a href="https://janus.conf.meetecho.com/">Janus Website</a> and the <a href="https://github.com/meetecho/janus-gateway">Janus GitHub</a> - was chosen to act as the webRTC server. This was chosen due to it being able to be installed on any major OS, but also due to it doing a good job of satisfying the needs of many-to-many streaming while using the webRTC standard.</p>
+        </section>
+
+        <section id="installation">
+            <h2>Installation</h2>
+            <p>The installation we chose was to compile from source. This way, it would be more up to date but also allow for the defaults to be installed to make debugging a little easier. To install, pasting the following into a sh script and running it should install Janus. If the script is run with sudo, it generally doesn't work. The program is able to be installed this way as well on Windows Subsystem for Linux given the Linux installed uses the apt manager. The program can similarly be installed on MacOS devices - the commands to run for installation are provided on the GitHub - and there is some additional stuff that needs to be added to commands to get the paths to be correct.</p>
+
+            <h3>Bash commands to install the Janus RTC server on machines that use the apt package manager.</h3>
+            <pre><code class="language-bash">
+sudo apt update
+sudo apt install -y autoconf automake m4 libtool build-essential
+
+sudo apt install -y libmicrohttpd-dev libjansson-dev \
+    libssl-dev libsofia-sip-ua-dev libglib2.0-dev \
+    libopus-dev libogg-dev libcurl4-openssl-dev liblua5.3-dev \
+    libconfig-dev pkg-config zlib1g-dev libusrsctp-dev libwebsockets-dev \
+    libnice-dev libsrtp2-dev aptitude
+
+sudo apt install libnice-dev
+# The janus documentation says to do it this way rather than apt install
+# However it doesn't always work if done this way
+# git clone https://gitlab.freedesktop.org/libnice/libnice
+# cd libnice
+# meson --prefix=/usr build && ninja -C build && sudo ninja -C build install
+
+sudo aptitude -y install doxygen graphviz
+
+git clone https://github.com/meetecho/janus-gateway.git
+cd janus-gateway
+sh autogen.sh
+./configure --prefix=/opt/janus --enable-docs
+make
+sudo make install
+sudo make configs
+            </code></pre>
+
+            <p>Currently, Janus is configured to use the Janus defaults. However, when new streams need to be added, the configuration file must be updated to include these new streams. For creating the configuration settings, refer to the Janus foundation documentation on the streaming configuration file. Likewise, for the textroom the default configuration is used, but more textrooms can be added by changing the textrooms configurations.</p>
+            <p>For the following sections, the code needed to run on the robot side for streaming is computervision.py, and for textroom, only getsessions.py is needed, but sendtoconsole.py functions as a wrapper to send any console outputs a program might generate to a text room.</p>
+        </section>
+
+        <section id="python-stream">
+            <h2>Section 2: Basic setup to send a stream to Janus via Python</h2>
+            <p>For basic use of the Janus vision feature, the default configurations for streaming allow for a simple python script to be able to send in video using <a href="https://www.ffmpeg.org/documentation.html">ffmpeg</a>.</p>
+
+            <h3>ffmpeg command to send a OpenCV stream to Janus</h3>
+            <pre><code class="language-python">
+# Note: This looks like a Python list definition containing the command parts
+ffmpeg_command = [
+    "ffmpeg",
+    # Video Input
+    "-f", "rawvideo",        # Raw video input
+    "-pix_fmt", "bgr24",     # Pixel format (from OpenCV)
+    "-s", "640x480",         # Frame size
+    "-r", "30",              # Frame rate
+    "-i", "-",               # Input from stdin
+
+    # Video Encoding
+    "-c:v", "libvpx",        # VP8 codec
+    "-b:v", "1M",            # Bitrate
+    "-an",                   # Disable audio for video stream
+
+    # RTP Stream for Video
+    "-f", "rtp",
+    # Make sure this IP and Port are correct for your Janus server config
+    "rtp://172.31.17.0:5008?pkt_size=1200",
+]
+            </code></pre>
+            <p>This is the setup for a command line command to use ffmpeg. The list will be issued as a terminal command using the subprocess library. The command is fairly bare bones, and 640 by 480 was picked arbitrarily.</p>
+
+            <pre><code class="language-python">
+# Python code snippets for using the ffmpeg command with OpenCV
+import subprocess
+import cv2
+
+# Assuming ffmpeg_command is defined as above
+ffmpeg_process = subprocess.Popen(ffmpeg_command, stdin=subprocess.PIPE)
+
+cap = cv2.VideoCapture(0) # Use camera index 0
+
+if not cap.isOpened():
+    print("Error: Could not open camera")
+    exit()
+
+try:
+    while True: # Example loop
+        ret, frame = cap.read()
+        if not ret:
+            print("Error: Could not read frame")
+            break
+
+        # Optional: Any image processing on 'frame' happens here
+        # ...
+
+        # Ensure frame matches the ffmpeg input size
+        frame_resized = cv2.resize(frame, (640, 480))
+
+        # Write frame data to ffmpeg's stdin
+        try:
+            ffmpeg_process.stdin.write(frame_resized.tobytes())
+        except (IOError, BrokenPipeError):
+             print("ffmpeg process terminated")
+             break # Exit loop if ffmpeg closes stdin
+
+        # Optional: Display the frame locally
+        # cv2.imshow('Sending Frame', frame_resized)
+        # if cv2.waitKey(1) & 0xFF == ord('q'):
+        #     break
+
+finally: # Cleanup
+    cap.release()
+    # cv2.destroyAllWindows() # If using imshow
+    if ffmpeg_process.stdin:
+        ffmpeg_process.stdin.close()
+    ffmpeg_process.wait()
+    print("Streaming finished.")
+
+            </code></pre>
+            <p>This code is the general set up to stream a video feed using ffmpeg and OpenCV. Using the previously defined command, the subprocess library runs the command in the terminal. The `cap` is camera capture, and uses OpenCV to check that the camera is working and can be read from. After those checks are done, any image processing that needs to be done can happen before resizing. The final frame is sent to the Janus server using the `stdin.write` function. After this, the commands needed to clean up follow.</p>
+        </section>
+
+        <section id="website-backend">
+            <h2>Section 3: Website backend</h2>
+            <p>Most of the heavy lifting for the web app side is done by the `streaming.js` file modified from the Janus foundation. This file interacts with the Janus server, and gets data about the streams as well as the stream data itself.</p>
+            <p>The `streaming.js` file is split into 3 components: the initialization of Janus in the web client, the communications with the server, and the code to adapt the webpage based on the incoming data. The second part is the part with the most complexity, as any future modifications of inserting/changing elements on the webpage is self-explanatory.</p>
+            <p>The Janus RTC hook is done partially in the Janus setup, partially in the `streamStart` function. The `streamStart` function does some basic checking that the user is trying to access a valid stream, and adds any flags to the appropriate elements in the page for Janus to use. Importantly, an element with `mstream` is created and this is where a lot of the flagging and operations are done by Janus.</p>
+            <p>To see more about `streaming.js`, look into the `streaming.js` code and the streaming documentation on the Janus website.</p>
+        </section>
+
+        <section id="text-transfer-python">
+            <h2>Section 4: Text based transfer (Python to Janus)</h2>
+            <p>To start message passing to Janus and using Janus. This is mostly implemented using Python `requests`, while the data being transferred is being transmitted using JSON. The first two functions, `create_session()` and `attach_plugin()`, start the communication with the Janus server, first by doing a connection handshake, then specifying how the sender plans on interacting with the Janus server by sending the plugin. The `textroom` plugin is specified for this use of Janus.</p>
+
+            <h3>Sending a message to the textroom</h3>
+            <pre><code class="language-python">
+import requests
+import uuid
+import json # Though not strictly needed for this snippet if response isn't parsed
+
+# Assume JANUS_SERVER_URL is defined, e.g., "http://your-janus-ip:8088/janus"
+
+# Send a message through the data channel
+def send_message(session_id, handle_id, room, message):
+    url = f"{JANUS_SERVER_URL}/{session_id}/{handle_id}"
+    transaction_id = str(uuid.uuid4()) # Unique ID for this transaction
+
+    payload = {
+        "janus": "message",
+        "transaction": transaction_id,
+        "body": {
+            # Corrected version:
+            "request": "message",
+            "room": room,
+            "text": message
+        }
+    }
+
+    try:
+        response = requests.post(url, json=payload)
+        response.raise_for_status() # Raise an exception for bad status codes (4xx or 5xx)
+        response_data = response.json()
+        print("Send Message Response:", response_data) # Process response if needed
+        return response_data
+    except requests.exceptions.RequestException as e:
+        print(f"Error sending message: {e}")
+        return None
+    except json.JSONDecodeError:
+        print(f"Error decoding JSON response: {response.text}")
+        return None
+
+# Example Usage (assuming you have session_id, handle_id, and room_id)
+# send_message(my_session_id, my_handle_id, 1234, "Hello from Python!")
+
+            </code></pre>
+            <p>The `send_message` function again uses nested JSON text. The code for initiating and leaving a textroom are similar, but some of the nested structure differs. See the textroom documentation by the Janus foundation for more details for all three actions (join, message, leave). For the nested JSON, the `"request"` field in the `body` determines the action. Any communication is typically a JSON payload sent via POST requests as specified by the Janus API documentation.</p>
+            <p>This allows for a one-way sending of data from the Python script to the Janus textroom which can then be read by a webserver client. The code could be modified to work both ways - send and receive - by implementing long-polling on the session endpoint, but with the current way the webapp works it is not essential that the Python script receives any information. In the future, however, if the scope is expanded such that the remote console needs to also implement user input, receiving messages via long-polling is the standard Janus approach.</p>
+        </section>
+
+        <section id="website-text-transfer">
+            <h2>Section 5: Website text based transfer (Janus to Website)</h2>
+            <p>For text transfers, the only place on the website that they are read is the console. This is implemented as read-only, but it could be modified to be read and write. The actual workhorse of implementing the Janus textroom functionality on the web client side is the `textroom.js` file (or similar JavaScript logic). The `textroom.js` file is very similar to the `streaming.js` file in concept: it sets up the Janus connection, attaches to the specific plugin (`janus.plugin.textroom`), handles joining the room, sending messages (if needed), and processing incoming messages or events from Janus.</p>
+        </section>
+
+    </main>
+
+    <footer>
+        <p>© 2025 ECE Capstone Team 1. Zero rights reserved.</p>
+    </footer>
+
+    <!-- Script to initialize Highlight.js -->
+    <script>hljs.highlightAll();</script>
+</body>
+</html>
